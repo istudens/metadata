@@ -89,6 +89,8 @@ public class ExtensionTestCase {
         InputStream in = getClass().getResourceAsStream("/org/jboss/metadata/ejb/test/extension/jboss-ejb3.xml");
         Document document = ValidationHelper.parse(new InputSource(in), getClass());
         assertNotNull(document);
+        Document xsdDocument = ValidationHelper.parseXsd(new InputSource(in), getClass());
+        assertNotNull(xsdDocument);
     }
 
     @Test
@@ -96,5 +98,7 @@ public class ExtensionTestCase {
         InputStream in = getClass().getResourceAsStream("/org/jboss/metadata/ejb/test/extension/jboss-ejb3-with-bean.xml");
         Document document = ValidationHelper.parse(new InputSource(in), getClass());
         assertNotNull(document);
+        Document xsdDocument = ValidationHelper.parseXsd(new InputSource(in), getClass());
+        assertNotNull(xsdDocument);
     }
 }
