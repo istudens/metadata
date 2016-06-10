@@ -86,9 +86,10 @@ public class ExtensionTestCase {
 
     @Test
     public void testValidity() throws IOException, SAXException, ParserConfigurationException, URISyntaxException {
-        InputStream in = getClass().getResourceAsStream("/org/jboss/metadata/ejb/test/extension/jboss-ejb3.xml");
-        Document document = ValidationHelper.parse(new InputSource(in), getClass());
-        assertNotNull(document);
+//        InputStream in = getClass().getResourceAsStream("/org/jboss/metadata/ejb/test/extension/jboss-ejb3.xml");
+        InputStream in = getClass().getResourceAsStream("/org/jboss/metadata/ejb/test/extension/ejb3-jar.xml");
+//        Document document = ValidationHelper.parse(new InputSource(in), getClass());
+//        assertNotNull(document);
         Document xsdDocument = ValidationHelper.parseXsd(new InputSource(in), getClass());
         assertNotNull(xsdDocument);
     }

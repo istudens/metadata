@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+    <xs:include schemaLocation="javaee_6.xsd"/>
+    <xs:include schemaLocation="ejb-jar_3_1.xsd"/>
+    <xs:include schemaLocation="javaee_web_services_client_1_3.xsd"/>
+<!--
+    <xs:include schemaLocation="jboss-ejb3-2_0.xsd"/>
+    <xs:include schemaLocation="jboss-ejb3-spec-2_0.xsd"/>
+-->
+</xs:schema>

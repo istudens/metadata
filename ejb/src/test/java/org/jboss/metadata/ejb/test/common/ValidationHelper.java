@@ -21,10 +21,10 @@
  */
 package org.jboss.metadata.ejb.test.common;
 
-import java.io.File;
+//import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilder;
@@ -48,17 +48,18 @@ public class ValidationHelper {
 
     static final Map<String, String> catalogue;
     static {
-        catalogue = new HashMap<String, String>();
-        catalogue.put("http://www.jboss.org/j2ee/schema/jboss-ejb3-2_0.xsd", "/schema/jboss-ejb3-2_0.xsd");
+        // the outcome of Xerces parser (XML Schema Grammar Loader) depends on the order of xsds which are passed to XMLSchemaFactory.newSchema
+        catalogue = new LinkedHashMap();
         catalogue.put("http://www.jboss.org/j2ee/schema/jboss-ejb3-spec-2_0.xsd", "/schema/jboss-ejb3-spec-2_0.xsd");
+        catalogue.put("http://www.jboss.org/j2ee/schema/jboss-ejb3-2_0.xsd", "/schema/jboss-ejb3-2_0.xsd");
         catalogue.put("http://java.sun.com/xml/ns/javaee/ejb-jar_3_1.xsd", "/schema/ejb-jar_3_1.xsd");
         catalogue.put("http://java.sun.com/xml/ns/javaee/javaee_6.xsd", "/schema/javaee_6.xsd");
         catalogue.put("http://java.sun.com/xml/ns/javaee/javaee_web_services_client_1_3.xsd", "/schema/javaee_web_services_client_1_3.xsd");
         catalogue.put("http://www.w3.org/2001/xml.xsd", "/schema/xml.xsd");
-        catalogue.put("http://www.jboss.org/j2ee/schema/trans-timeout-1_0.xsd", "/schema/trans-timeout-1_0.xsd");
-        // Somehow this gives a broken URI, see http://en.wikipedia.org/wiki/File_URI_scheme
-        catalogue.put("file://" + new File(System.getProperty("user.dir")).toURI().getPath() + "tx-test.xsd", "tx-test.xsd");
-        catalogue.put("file://" + new File(System.getProperty("user.dir")).toURI().getPath() + "cache-test.xsd", "cache-test.xsd");
+//        catalogue.put("http://www.jboss.org/j2ee/schema/trans-timeout-1_0.xsd", "/schema/trans-timeout-1_0.xsd");
+//        // Somehow this gives a broken URI, see http://en.wikipedia.org/wiki/File_URI_scheme
+//        catalogue.put("file://" + new File(System.getProperty("user.dir")).toURI().getPath() + "tx-test.xsd", "tx-test.xsd");
+//        catalogue.put("file://" + new File(System.getProperty("user.dir")).toURI().getPath() + "cache-test.xsd", "cache-test.xsd");
     }
 
     private static InputStream inputStream(final Class loader, final String resource) {
@@ -96,7 +97,7 @@ public class ValidationHelper {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         factory.setValidating(false);
-        final Map<String, String> catalogueToValidate = new HashMap<String, String>(catalogue);
+        final Map<String, String> catalogueToValidate = new LinkedHashMap<String, String>(catalogue);
 //        // skip the following due to "javaee_web_services_client_1_3.xsd line 87 column 49 src-resolve: Cannot resolve the name 'javaee:descriptionGroup' to a(n) 'group' component."
 //        catalogueToValidate.remove("http://java.sun.com/xml/ns/javaee/javaee_web_services_client_1_3.xsd");
         final Source[] schemas = new Source[catalogueToValidate.size()];
@@ -108,6 +109,18 @@ public class ValidationHelper {
         schemaFactory.setErrorHandler(SimpleErrorHandler.INSTANCE);
         // FIXME ahhh, the following fails due to https://issues.apache.org/jira/browse/XERCESJ-1130
         // as multiple catalogue items (JBoss specific XSDs) redefine the javaee namespace
+/*
+        final String resource = "composite-javaee.xsd";
+        final String systemId = "file://" + new File(System.getProperty("user.dir")).toURI().getPath() + resource;
+        final StreamSource streamSource = new StreamSource(inputStream(loader, resource));
+        streamSource.setSystemId(systemId);
+        factory.setSchema(schemaFactory.newSchema(streamSource));
+*/
+        // Despite the XERCESJ-1130, Xerces cannot cope with multiple XSDs referring to each other
+        // (which is the case of jboss-ejb3-spec-2_0.xsd and jboss-ejb3-2_0.xsd) as it loads and *fully*
+        // parses the schemas one by one in the order they are passed in to the newSchema method, so in time
+        // of parsing the former it does not understand elements which are defined in the latter.
+        // Hence, these XSDs cannot be validated by Xerces.
         factory.setSchema(schemaFactory.newSchema(schemas));
         DocumentBuilder parser = factory.newDocumentBuilder();
         parser.setEntityResolver(new SimpleEntityResolver(loader));
@@ -124,7 +137,7 @@ public class ValidationHelper {
 
         @Override
         public InputSource resolveEntity(String publicId, String systemId) throws SAXException, IOException {
-//            System.out.println("resolve " + publicId + ", " + systemId);
+            System.out.println("resolve " + publicId + ", " + systemId);
             final String resource = catalogue.get(systemId);
             if (resource == null) { throw new SAXException("Can't resolve systemId " + systemId); }
             return inputSource(loader, systemId, resource);
